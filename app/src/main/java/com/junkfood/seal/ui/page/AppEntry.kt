@@ -33,6 +33,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.junkfood.seal.App
 import com.junkfood.seal.R
+import com.junkfood.seal.ui.component.AutoDeleteChoiceGate
 import com.junkfood.seal.ui.common.HapticFeedback.slightHapticFeedback
 import com.junkfood.seal.ui.common.LocalWindowWidthState
 import com.junkfood.seal.ui.common.Route
@@ -179,7 +180,7 @@ fun AppEntry(dialogViewModel: DownloadDialogViewModel) {
             }
 
             AppUpdater()
-            YtdlpUpdater()
+            AutoDeleteChoiceGate()
         }
     }
 }

@@ -94,6 +94,7 @@ fun VideoCardV2(
     viewState: Task.ViewState,
     stateIndicator: @Composable (BoxScope.() -> Unit)? = null,
     actionButton: @Composable (BoxScope.() -> Unit)? = null,
+    bottomAction: @Composable (() -> Unit)? = null,
     onButtonClick: () -> Unit,
 ) {
     with(viewState) {
@@ -106,6 +107,7 @@ fun VideoCardV2(
             fileSizeApprox = fileSizeApprox,
             stateIndicator = stateIndicator,
             actionButton = actionButton,
+            bottomAction = bottomAction,
             onButtonClick = onButtonClick,
         )
     }
@@ -229,6 +231,7 @@ fun VideoCardV2(
     fileSizeApprox: Double = .0,
     stateIndicator: @Composable (BoxScope.() -> Unit)? = null,
     actionButton: @Composable (BoxScope.() -> Unit)? = null,
+    bottomAction: @Composable (() -> Unit)? = null,
     onButtonClick: () -> Unit,
 ) {
     val containerColor =
@@ -261,6 +264,7 @@ fun VideoCardV2(
                     )
                 }
             }
+            bottomAction?.invoke()
         }
     }
 }

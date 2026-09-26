@@ -1,5 +1,9 @@
 package com.junkfood.seal.ui.page.settings
 
+import com.junkfood.seal.ui.page.settings.about.TOOLS_CHANNEL_URL
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.material.icons.rounded.Campaign
+import androidx.compose.material.icons.rounded.Update
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -28,7 +32,6 @@ import androidx.compose.material.icons.rounded.SignalWifi4Bar
 import androidx.compose.material.icons.rounded.Terminal
 import androidx.compose.material.icons.rounded.VideoFile
 import androidx.compose.material.icons.rounded.ViewComfy
-import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +59,6 @@ import com.junkfood.seal.ui.component.SettingItem
 import com.junkfood.seal.util.EXTRACT_AUDIO
 import com.junkfood.seal.util.PreferenceUtil.getBoolean
 import com.junkfood.seal.util.PreferenceUtil.updateInt
-import com.junkfood.seal.util.SHOW_SPONSOR_MSG
 
 @SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,9 +105,7 @@ fun SettingsPage(onNavigateBack: () -> Unit, onNavigateTo: (String) -> Unit) {
         }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    val showSponsorMessage by SHOW_SPONSOR_MSG.intState
 
-    LaunchedEffect(Unit) { SHOW_SPONSOR_MSG.updateInt(showSponsorMessage + 1) }
 
     val typography = MaterialTheme.typography
 
@@ -144,16 +144,26 @@ fun SettingsPage(onNavigateBack: () -> Unit, onNavigateTo: (String) -> Unit) {
                     }
                 }
             }
-            if (!showBatteryHint && showSponsorMessage > 30)
-                item {
-                    PreferencesHintCard(
-                        title = stringResource(id = R.string.sponsor),
-                        icon = Icons.Rounded.VolunteerActivism,
-                        description = stringResource(id = R.string.sponsor_desc),
-                    ) {
-                        onNavigateTo(Route.DONATE)
-                    }
+            item {
+                SettingItem(
+                    title = stringResource(R.string.check_for_updates),
+                    description =
+                        stringResource(R.string.current_version, App.packageInfo.versionName.orEmpty()),
+                    icon = Icons.Rounded.Update,
+                ) {
+                    onNavigateTo(Route.AUTO_UPDATE)
                 }
+            }
+            item {
+                val uriHandler = LocalUriHandler.current
+                SettingItem(
+                    title = stringResource(R.string.join_free_tools),
+                    description = stringResource(R.string.join_free_tools_desc),
+                    icon = Icons.Rounded.Campaign,
+                ) {
+                    uriHandler.openUri(TOOLS_CHANNEL_URL)
+                }
+            }
             item {
                 SettingItem(
                     title = stringResource(id = R.string.general_settings),

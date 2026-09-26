@@ -15,6 +15,8 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import com.junkfood.seal.util.STATUS_AUTO_DELETE
+import androidx.compose.material.icons.outlined.AutoDelete
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.Edit
@@ -177,6 +179,19 @@ fun GeneralDownloadPreferences(onNavigateBack: () -> Unit, navigateToTemplate: (
                             text = stringResource(id = R.string.custom_command_enabled_hint)
                         )
                     }
+                item {
+                    var autoDelete by STATUS_AUTO_DELETE.booleanState
+                    PreferenceSwitch(
+                        title = stringResource(R.string.auto_delete_setting),
+                        description = stringResource(R.string.auto_delete_setting_desc),
+                        icon = Icons.Outlined.AutoDelete,
+                        isChecked = autoDelete,
+                        onClick = {
+                            autoDelete = !autoDelete
+                            PreferenceUtil.updateValue(STATUS_AUTO_DELETE, autoDelete)
+                        },
+                    )
+                }
                 item {
                     var ytdlpVersion by remember {
                         mutableStateOf(

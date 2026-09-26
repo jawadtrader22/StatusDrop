@@ -47,10 +47,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        // cold start: onNewIntent is not called for the launching intent
+        if (savedInstanceState == null) handleSharedUrl(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleSharedUrl(intent)
+    }
+
+    private fun handleSharedUrl(intent: Intent) {
         val url = intent.getSharedURL()
         if (url != null) {
             dialogViewModel.postAction(DownloadDialogViewModel.Action.ShowSheet(listOf(url)))

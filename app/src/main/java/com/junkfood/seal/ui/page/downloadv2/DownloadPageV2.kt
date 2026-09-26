@@ -34,12 +34,14 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.rounded.DonutLarge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -102,6 +104,7 @@ import com.junkfood.seal.ui.common.HapticFeedback.slightHapticFeedback
 import com.junkfood.seal.ui.common.LocalDarkTheme
 import com.junkfood.seal.ui.common.LocalFixedColorRoles
 import com.junkfood.seal.ui.common.LocalWindowWidthState
+import com.junkfood.seal.ui.component.DownloadProgress
 import com.junkfood.seal.ui.component.SealModalBottomSheet
 import com.junkfood.seal.ui.component.SelectionGroupDefaults
 import com.junkfood.seal.ui.component.SelectionGroupItem
@@ -177,6 +180,8 @@ sealed interface UiAction {
 
     data class ShareFile(val filePath: String?) : UiAction
 
+    data class ShareToStatus(val filePath: String?) : UiAction
+
     data class OpenThumbnailURL(val url: String) : UiAction
 
     data object CopyVideoURL : UiAction
@@ -213,6 +218,12 @@ fun DownloadPageV2(
             view.slightHapticFeedback()
             dialogViewModel.postAction(Action.ShowSheet())
         },
+        onDownloadUrl = { url ->
+            view.slightHapticFeedback()
+            downloader.enqueue(
+                Task(url = url, preferences = DownloadUtil.DownloadPreferences.createFromPreferences())
+            )
+        },
         onMenuOpen = onMenuOpen,
     ) { task, action ->
         view.slightHapticFeedback()
@@ -246,6 +257,12 @@ fun DownloadPageV2(
                 FileUtil.createIntentForSharingFile(action.filePath)?.let {
                     context.startActivity(Intent.createChooser(it, shareTitle))
                 }
+            }
+            is UiAction.ShareToStatus -> {
+                FileUtil.createIntentForStatusSharing(action.filePath)?.let {
+                    context.startActivity(it)
+                    FileUtil.deleteLaterIfAutoDelete(action.filePath)
+                } ?: context.makeToast(R.string.file_unavailable)
             }
         }
     }
@@ -318,6 +335,7 @@ fun DownloadPageImplV2(
     modifier: Modifier = Modifier,
     taskDownloadStateMap: SnapshotStateMap<Task, Task.State>,
     downloadCallback: () -> Unit = {},
+    onDownloadUrl: (String) -> Unit = {},
     onMenuOpen: (() -> Unit) = {},
     onActionPost: (Task, UiAction) -> Unit,
 ) {
@@ -344,7 +362,7 @@ fun DownloadPageImplV2(
 
     LaunchedEffect(selectedTask, taskDownloadStateMap.size) {
         if (!taskDownloadStateMap.contains(selectedTask)) {
-            selectedTask == null
+            selectedTask = null
         }
     }
 
@@ -384,6 +402,11 @@ fun DownloadPageImplV2(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Spacer(Modifier.height(with(LocalDensity.current) { headerOffset.toDp() }))
                     Header(onMenuOpen = onMenuOpen, modifier = Modifier.padding(horizontal = 16.dp))
+                    PasteLinkBar(
+                        knownUrls = taskDownloadStateMap.keys.map { it.url }.toSet(),
+                        onDownload = onDownloadUrl,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                    )
                     SelectionGroupRow(
                         modifier =
                             Modifier.horizontalScroll(rememberScrollState())
@@ -437,9 +460,8 @@ fun DownloadPageImplV2(
                     if (filteredMap.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             val videoCount =
-                                filteredMap.count {
-                                    !it.value.viewState.videoFormats.isNullOrEmpty()
-                                }
+                                // progressive formats (FB "hd") report no video codec, trust the task type
+                                filteredMap.count { !it.key.preferences.extractAudio }
                             SubHeader(
                                 modifier = Modifier,
                                 videoCount = videoCount,
@@ -457,10 +479,61 @@ fun DownloadPageImplV2(
                                 filteredMap.toList().sortedBy { (_, state) -> state.downloadState },
                             key = { (task, _) -> task.id },
                         ) { (task, state) ->
+                            val completedPath = (state.downloadState as? Completed)?.filePath
+                            // real size once the file exists, the pre-download estimate is often 0
+                            val realSize =
+                                remember(completedPath) {
+                                    completedPath?.let { with(FileUtil) { it.getFileSize() } }
+                                }
                             with(state.viewState) {
                                 VideoCardV2(
                                     modifier = Modifier.padding(bottom = 20.dp).padding(),
-                                    viewState = this,
+                                    viewState =
+                                        if (realSize != null && realSize > 0)
+                                            copy(fileSizeApprox = realSize.toDouble())
+                                        else this,
+                                    bottomAction =
+                                        if (state.downloadState is Completed) {
+                                            {
+                                                FilledTonalButton(
+                                                    onClick = {
+                                                        onActionPost(
+                                                            task,
+                                                            UiAction.ShareToStatus(completedPath),
+                                                        )
+                                                    },
+                                                    modifier =
+                                                        Modifier.fillMaxWidth()
+                                                            .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                                                ) {
+                                                    Icon(
+                                                        Icons.Rounded.DonutLarge,
+                                                        null,
+                                                        Modifier.size(18.dp),
+                                                    )
+                                                    Text(
+                                                        stringResource(R.string.share_to_status),
+                                                        Modifier.padding(start = 8.dp),
+                                                    )
+                                                }
+                                            }
+                                        } else if (state.downloadState is Running) {
+                                            {
+                                                val running = state.downloadState
+                                                DownloadProgress(
+                                                    progress = running.progress,
+                                                    progressText = running.progressText,
+                                                    label =
+                                                        stringResource(R.string.status_downloading),
+                                                    modifier =
+                                                        Modifier.padding(
+                                                            start = 12.dp,
+                                                            end = 12.dp,
+                                                            bottom = 12.dp,
+                                                        ),
+                                                )
+                                            }
+                                        } else null,
                                     actionButton = {
                                         ActionButton(
                                             modifier = Modifier,
@@ -560,7 +633,7 @@ private fun HeaderCompact(modifier: Modifier = Modifier, onMenuOpen: () -> Unit)
         }
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            stringResource(R.string.download_queue),
+            stringResource(R.string.app_name),
             style =
                 MaterialTheme.typography.titleLarge.copy(
                     fontSize = 20.sp,
@@ -575,7 +648,7 @@ private fun HeaderExpanded(modifier: Modifier = Modifier) {
     Row(modifier = modifier.height(64.dp), verticalAlignment = Alignment.CenterVertically) {
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            stringResource(R.string.download_queue),
+            stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Medium),
         )
     }
@@ -594,14 +667,14 @@ fun FABs(modifier: Modifier = Modifier, downloadCallback: () -> Unit = {}) {
                         modifier = Modifier.widthIn(min = 80.dp).padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Outlined.FileDownload, contentDescription = null)
+                        Icon(Icons.Outlined.Tune, contentDescription = null)
                         Spacer(Modifier.width(12.dp))
-                        Text(stringResource(R.string.download))
+                        Text(stringResource(R.string.more_options))
                     }
                 } else {
                     Icon(
-                        Icons.Outlined.FileDownload,
-                        contentDescription = stringResource(R.string.download),
+                        Icons.Outlined.Tune,
+                        contentDescription = stringResource(R.string.more_options),
                     )
                 }
             },

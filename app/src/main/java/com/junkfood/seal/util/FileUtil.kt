@@ -13,6 +13,12 @@ import androidx.annotation.CheckResult
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
 import com.junkfood.seal.App.Companion.context
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import com.junkfood.seal.util.PreferenceUtil.updateString
+import com.junkfood.seal.util.PreferenceUtil.getString
+import com.junkfood.seal.util.PreferenceUtil.getBoolean
+import com.junkfood.seal.App
 import com.junkfood.seal.R
 import java.io.File
 import okhttp3.internal.closeQuietly
@@ -81,6 +87,54 @@ object FileUtil {
             setDataAndType(this.data, mimeType)
             clipData = ClipData(null, arrayOf(mimeType), ClipData.Item(data))
         }
+
+    private val whatsAppPackages = listOf("com.whatsapp", "com.whatsapp.w4b")
+
+    /** Opens WhatsApp's share sheet (with "My status" on top); falls back to system chooser. */
+    fun createIntentForStatusSharing(path: String?): Intent? =
+        createIntentForSharingFile(path)?.let { share ->
+            // ponytail: no public API posts to status directly, user taps "My status" once
+            val whatsApp =
+                whatsAppPackages.firstOrNull {
+                    context.packageManager.getLaunchIntentForPackage(it) != null
+                }
+            if (whatsApp != null) share.setPackage(whatsApp)
+            else Intent.createChooser(share, null)
+        }?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    // WhatsApp still reads the file while the user edits the Status, so delete later
+    private const val STATUS_DELETE_DELAY_MS = 15 * 60_000L
+
+    /** Queues [path] for deletion if the user chose auto-delete; the history row is kept. */
+    fun deleteLaterIfAutoDelete(path: String?) {
+        if (path == null || !STATUS_AUTO_DELETE.getBoolean()) return
+        val entries = PENDING_STATUS_DELETES.getString().lines().filter { it.isNotBlank() }
+        PENDING_STATUS_DELETES.updateString(
+            (entries + "${System.currentTimeMillis()}|$path").joinToString("\n")
+        )
+        App.applicationScope.launch {
+            delay(STATUS_DELETE_DELAY_MS)
+            purgePendingStatusDeletes()
+        }
+    }
+
+    /** Also runs on app start, in case the process died before the delay ran out. */
+    @Synchronized
+    fun purgePendingStatusDeletes() {
+        val now = System.currentTimeMillis()
+        val (due, waiting) =
+            PENDING_STATUS_DELETES.getString()
+                .lines()
+                .filter { it.substringBefore('|').toLongOrNull() != null }
+                .partition { it.substringBefore('|').toLong() + STATUS_DELETE_DELAY_MS <= now }
+        due.map { it.substringAfter('|') }
+            .forEach { path ->
+                deleteFile(path)
+                // drop it from the gallery index too
+                MediaScannerConnection.scanFile(context, arrayOf(path), null, null)
+            }
+        PENDING_STATUS_DELETES.updateString(waiting.joinToString("\n"))
+    }
 
     fun Context.getFileProvider() = "$packageName.provider"
 
@@ -195,7 +249,7 @@ object FileUtil {
     fun Context.getInternalTempDir() = File(filesDir, "tmp")
 
     internal fun getExternalDownloadDirectory() =
-        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Seal")
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "StatusDrop")
             .also { it.mkdir() }
 
     internal fun getExternalPrivateDownloadDirectory() =

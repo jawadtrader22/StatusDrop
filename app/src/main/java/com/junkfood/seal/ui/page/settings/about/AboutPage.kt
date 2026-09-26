@@ -1,5 +1,6 @@
 package com.junkfood.seal.ui.page.settings.about
 
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.outlined.Share
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,13 +57,13 @@ import com.junkfood.seal.util.AUTO_UPDATE
 import com.junkfood.seal.util.PreferenceUtil
 import com.junkfood.seal.util.ToastUtil
 
-private const val releaseURL = "https://github.com/JunkFood02/Seal/releases"
-private const val repoUrl = "https://github.com/JunkFood02/Seal"
+private const val releaseURL = "https://github.com/jawadtrader22/StatusDrop/releases"
+private const val repoUrl = "https://github.com/jawadtrader22/StatusDrop"
+private const val developerTelegram = "https://t.me/Jawadtrader22"
+const val TOOLS_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb8dcoh3GJP4jR0UFT3D"
 const val weblate = "https://hosted.weblate.org/engage/seal/"
 const val YtdlpRepository = "https://github.com/yt-dlp/yt-dlp"
-private const val githubIssueUrl = "https://github.com/JunkFood02/Seal/issues"
-private const val telegramChannelUrl = "https://t.me/seal_app"
-private const val matrixSpaceUrl = "https://matrix.to/#/#seal-space:matrix.org"
+private const val githubIssueUrl = "https://github.com/jawadtrader22/StatusDrop/issues"
 private const val githubSponsor = "https://github.com/sponsors/JunkFood02"
 private const val TAG = "AboutPage"
 
@@ -112,6 +115,24 @@ fun AboutPage(
             LazyColumn(modifier = Modifier.padding(it)) {
                 item {
                     PreferenceItem(
+                        title = stringResource(R.string.developer),
+                        description = stringResource(R.string.developer_desc, developerTelegram),
+                        icon = painterResource(id = R.drawable.icons8_telegram_app),
+                    ) {
+                        openUrl(developerTelegram)
+                    }
+                }
+                item {
+                    PreferenceItem(
+                        title = stringResource(R.string.join_free_tools),
+                        description = stringResource(R.string.join_free_tools_desc),
+                        icon = Icons.Outlined.Campaign,
+                    ) {
+                        openUrl(TOOLS_CHANNEL_URL)
+                    }
+                }
+                item {
+                    PreferenceItem(
                         title = stringResource(R.string.readme),
                         description = stringResource(R.string.readme_desc),
                         icon = Icons.Outlined.Description,
@@ -137,30 +158,21 @@ fun AboutPage(
                 }*/
                 item {
                     PreferenceItem(
-                        title = stringResource(id = R.string.sponsor),
-                        description = stringResource(id = R.string.sponsor_desc),
-                        icon = Icons.Outlined.VolunteerActivism,
+                        title = stringResource(R.string.share_app),
+                        description = releaseURL,
+                        icon = Icons.Outlined.Share,
                     ) {
-                        //                    openUrl(githubSponsor)
-                        onNavigateToDonatePage()
-                    }
-                }
-                item {
-                    PreferenceItem(
-                        title = stringResource(R.string.telegram_channel),
-                        description = telegramChannelUrl,
-                        icon = painterResource(id = R.drawable.icons8_telegram_app),
-                    ) {
-                        openUrl(telegramChannelUrl)
-                    }
-                }
-                item {
-                    PreferenceItem(
-                        title = stringResource(R.string.matrix_space),
-                        description = matrixSpaceUrl,
-                        icon = painterResource(id = R.drawable.icons8_matrix),
-                    ) {
-                        openUrl(matrixSpaceUrl)
+                        context.startActivity(
+                            Intent.createChooser(
+                                Intent(Intent.ACTION_SEND)
+                                    .setType("text/plain")
+                                    .putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        context.getString(R.string.share_app_msg, releaseURL),
+                                    ),
+                                null,
+                            )
+                        )
                     }
                 }
                 item {
@@ -223,7 +235,7 @@ fun AutoUpdateUnavailableDialog(onDismissRequest: () -> Unit = {}) {
         val startIndex = text.indexOf(hyperLinkText)
         val endIndex = startIndex + hyperLinkText.length
         addUrlAnnotation(
-            UrlAnnotation("https://github.com/JunkFood02/Seal/releases/latest"),
+            UrlAnnotation("https://github.com/jawadtrader22/StatusDrop/releases/latest"),
             start = startIndex,
             end = endIndex,
         )

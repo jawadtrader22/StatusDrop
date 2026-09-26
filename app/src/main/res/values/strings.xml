@@ -1,5 +1,25 @@
 <resources>
-    <string name="app_name" translatable="false">Seal</string>
+    <string name="app_name" translatable="false">StatusDrop</string>
+    <string name="share_to_status">Share to Status</string>
+    <string name="ready_to_share">Ready! Post it to your Status</string>
+    <string name="more_options">More options</string>
+    <string name="paste_link_hint">Paste a video link</string>
+    <string name="share_app">Share StatusDrop</string>
+    <string name="auto_delete_title">After posting to Status?</string>
+    <string name="auto_delete_desc">StatusDrop can remove the downloaded video from your phone 15 minutes after you share it to Status, so your gallery stays clean.\n\nYour history and links are kept, so you can re-download any video later.\n\nYou can change this anytime in Settings.</string>
+    <string name="auto_delete_yes">Auto-delete</string>
+    <string name="auto_delete_no">Keep videos</string>
+    <string name="auto_delete_setting">Auto-delete after sharing to Status</string>
+    <string name="auto_delete_setting_desc">Remove the video file 15 min after you post it. History and links are kept.</string>
+    <string name="file_not_on_device">This video is no longer on your phone</string>
+    <string name="file_not_on_device_desc">It was deleted after sharing, or removed from storage. Download it again from the saved link?</string>
+    <string name="join_free_tools">Join for free tools</string>
+    <string name="join_free_tools_desc">WhatsApp channel · new free tools and app updates</string>
+    <string name="current_version">Current version: %1$s</string>
+    <string name="developer">Developer</string>
+    <string name="developer_desc">Jawad · Crystal AI Systems\nTelegram: %1$s</string>
+    <string name="share_app_msg">Download any public reel or video and post it to your Status in one tap. Free, no ads: %1$s</string>
+    <string name="unsupported_link">That is not a valid link</string>
     <string name="video_directory">Video folder</string>
     <string name="extract_audio">Save as audio</string>
     <string name="create_thumbnail">Save thumbnail</string>
@@ -133,7 +153,7 @@
     <string name="permission_issue_desc">Directories outside Download/ and Documents/ are not supported</string>
     <string name="battery_configuration">Battery configuration</string>
     <string name="battery_configuration_desc">Ignore battery optimization for this app to download in the background</string>
-    <string name="service_title">Seal is downloading…</string>
+    <string name="service_title">StatusDrop is downloading…</string>
     <string name="unknown_error">Unknown error</string>
     <string name="translate">Translate</string>
     <string name="translate_desc">Help translate this app on Hosted Weblate</string>
@@ -232,7 +252,7 @@
     <string name="custom_command_enabled_hint">Some options are unavailable when using custom command</string>
     <string name="how_does_it_work">How does it work?</string>
     <string name="cookies_usage_msg">Downloading from some sites requires account authentication information. Click \"Generate new cookies\", enter the URL of the website and then log in with your account in the browser page, the app will generate it for you.</string>
-    <string name="custom_command_usage_msg">yt-dlp is a powerful command-line tool for downloading videos. Seal makes it easier to use yt-dlp by providing an intuitive GUI, presets for common commands, and other additional features.\n\nFor advanced usage of yt-dlp, Seal allows you to create, save and execute custom command templates directly, just like in a terminal.\n\nWhen using custom commands, most of the GUI options and features would be disabled.</string>
+    <string name="custom_command_usage_msg">yt-dlp is a powerful command-line tool for downloading videos. StatusDrop makes it easier to use yt-dlp by providing an intuitive GUI, presets for common commands, and other additional features.\n\nFor advanced usage of yt-dlp, StatusDrop allows you to create, save and execute custom command templates directly, just like in a terminal.\n\nWhen using custom commands, most of the GUI options and features would be disabled.</string>
     <string name="telegram_channel">Telegram channel</string>
     <string name="matrix_space">Matrix space</string>
     <string name="sdcard_directory">SD card folder</string>
@@ -288,7 +308,7 @@
     <string name="temporary_directory_desc">Store temporary files in the internal directory</string>
     <string name="sponsor">Sponsor</string>
     <string name="sponsor_desc">Support this app by sponsoring on GitHub</string>
-    <string name="sponsor_msg">Seal will be always free and open source for everyone. If you like it, please consider sponsoring me on GitHub!</string>
+    <string name="sponsor_msg">StatusDrop is free, open source and ad-free, built on top of Seal by JunkFood02. If you like it, please consider sponsoring the original author on GitHub!</string>
     <string name="feedback">Feedback</string>
     <string name="sponsors">Sponsors</string>
     <string name="audio_format">Audio format</string>
@@ -299,7 +319,7 @@
     <string name="clip_video_desc">Make video clips in the format selection page</string>
     <string name="embed_thumbnail" translatable="false">Embed thumbnail</string>
     <string name="embed_thumbnail_desc" translatable="false">Embed thumbnails into videos</string>
-    <string name="auto_update_disabled_msg">Auto-update is not available for %1$s builds. If you don\'t have %1$s installed on your device, or would like to preview upcoming new features in Seal, please consider %2$s.</string>
+    <string name="auto_update_disabled_msg">Auto-update is not available for %1$s builds. If you don\'t have %1$s installed on your device, or would like to preview upcoming new features in StatusDrop, please consider %2$s.</string>
     <string name="switch_to_github_builds">switching to GitHub builds</string>
     <string name="okay">Okay</string>
     <string name="got_it">Got it</string>

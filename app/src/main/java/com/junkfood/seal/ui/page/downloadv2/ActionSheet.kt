@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.VideoFile
+import androidx.compose.material.icons.rounded.DonutLarge
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,6 +85,18 @@ private fun ShareButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
         contentColor = LocalFixedColorRoles.current.onSecondaryFixedVariant,
         imageVector = Icons.Rounded.Share,
         text = stringResource(R.string.share),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun StatusButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    ActionSheetPrimaryButton(
+        modifier = modifier,
+        containerColor = LocalFixedColorRoles.current.tertiaryFixed,
+        contentColor = LocalFixedColorRoles.current.onTertiaryFixedVariant,
+        imageVector = Icons.Rounded.DonutLarge,
+        text = stringResource(R.string.share_to_status),
         onClick = onClick,
     )
 }
@@ -292,6 +305,12 @@ fun LazyListScope.ActionButtons(
             item(key = "PlayButton") {
                 PlayButton(modifier = Modifier.animateItem()) {
                     onActionPost(task, UiAction.OpenFile(downloadState.filePath))
+                    onDismissRequest()
+                }
+            }
+            item(key = "StatusButton") {
+                StatusButton(modifier = Modifier.animateItem()) {
+                    onActionPost(task, UiAction.ShareToStatus(downloadState.filePath))
                     onDismissRequest()
                 }
             }

@@ -1,5 +1,9 @@
 package com.junkfood.seal.ui.page.videolist
 
+import com.junkfood.seal.util.Platform
+import com.junkfood.seal.QuickDownloadActivity
+import androidx.compose.material.icons.outlined.FileDownloadOff
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -126,8 +130,9 @@ fun DownloadedVideoInfo.filterSort(
         filterByExtractor(filterSet.elementAtOrNull(viewState.activeFilterIndex))
 }
 
-fun DownloadedVideoInfo.filterByExtractor(extractor: String?): Boolean {
-    return extractor.isNullOrEmpty() || (this.extractor == extractor)
+/** [platform] is a [Platform.label]; grouping by link host merges yt-dlp's per-extractor keys. */
+fun DownloadedVideoInfo.filterByExtractor(platform: String?): Boolean {
+    return platform.isNullOrEmpty() || Platform.of(videoUrl).label == platform
 }
 
 private const val TAG = "VideoListPage"
@@ -163,6 +168,7 @@ fun VideoListPage(viewModel: VideoListViewModel = koinViewModel(), onNavigateBac
     val hostState = remember { SnackbarHostState() }
 
     var currentVideoInfo by remember { mutableStateOf(DownloadedVideoInfo()) }
+    var missingFileInfo by remember { mutableStateOf<DownloadedVideoInfo?>(null) }
 
     var isSelectEnabled by remember { mutableStateOf(false) }
     var showRemoveMultipleItemsDialog by remember { mutableStateOf(false) }
@@ -488,10 +494,15 @@ fun VideoListPage(viewModel: VideoListViewModel = koinViewModel(), onNavigateBac
                                     else selectedItemIds.add(id)
                                 },
                                 onClick = {
-                                    FileUtil.openFile(path = videoPath) {
-                                        ToastUtil.makeToastSuspend(
-                                            App.context.getString(R.string.file_unavailable)
-                                        )
+                                    // auto-deleted or removed: offer a re-download from the link
+                                    if (FileUtil.createIntentForOpeningFile(videoPath) == null) {
+                                        missingFileInfo = info
+                                    } else {
+                                        FileUtil.openFile(path = videoPath) {
+                                            ToastUtil.makeToastSuspend(
+                                                App.context.getString(R.string.file_unavailable)
+                                            )
+                                        }
                                     }
                                 },
                                 onLongClick = {
@@ -529,6 +540,27 @@ fun VideoListPage(viewModel: VideoListViewModel = koinViewModel(), onNavigateBac
     }
 
     var deleteFile by remember { mutableStateOf(false) }
+
+    missingFileInfo?.let { info ->
+        SealDialog(
+            onDismissRequest = { missingFileInfo = null },
+            icon = { Icon(Icons.Outlined.FileDownloadOff, null) },
+            title = { Text(stringResource(R.string.file_not_on_device)) },
+            text = { Text(stringResource(R.string.file_not_on_device_desc)) },
+            confirmButton = {
+                ConfirmButton(text = stringResource(R.string.redownload)) {
+                    missingFileInfo = null
+                    context.startActivity(
+                        Intent(Intent.ACTION_SEND)
+                            .setClass(context, QuickDownloadActivity::class.java)
+                            .setType("text/plain")
+                            .putExtra(Intent.EXTRA_TEXT, info.videoUrl)
+                    )
+                }
+            },
+            dismissButton = { DismissButton { missingFileInfo = null } },
+        )
+    }
 
     if (showRemoveDialog) {
         RemoveItemDialog(

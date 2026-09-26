@@ -3,6 +3,7 @@ package com.junkfood.seal.util
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabase.OPEN_READONLY
 import android.media.MediaCodecList
+import android.media.MediaScannerConnection
 import android.os.Build
 import android.util.Log
 import android.webkit.CookieManager
@@ -42,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.util.Locale
 
 object DownloadUtil {
@@ -477,6 +479,9 @@ object DownloadUtil {
                 if (mergeToMkv) {
                     addOption("--remux-video", "mkv")
                     addOption("--merge-output-format", "mkv")
+                } else {
+                    // WhatsApp Status only takes MP4 reliably
+                    addOption("--merge-output-format", "mp4")
                 }
                 if (embedThumbnail) {
                     addOption("--embed-thumbnail")
@@ -510,7 +515,7 @@ object DownloadUtil {
         this.run {
             val format =
                 when (videoFormat) {
-                    FORMAT_COMPATIBILITY -> "proto,vcodec:h264,ext"
+                    FORMAT_COMPATIBILITY -> "proto,vcodec:h264,acodec:aac,ext"
                     FORMAT_QUALITY ->
                         if (supportAv1HardwareDecoding) {
                             "vcodec:av01"
@@ -680,6 +685,10 @@ object DownloadUtil {
             val request = YoutubeDLRequest(url)
             val pathBuilder = StringBuilder()
             val outputBuilder = StringBuilder()
+            val pathsFile = File(context.cacheDir, "paths/${taskId.hashCode()}.txt").apply {
+                parentFile?.mkdirs()
+                delete()
+            }
 
             request
                 .apply {
@@ -777,6 +786,8 @@ object DownloadUtil {
                     }
                     if (Build.VERSION.SDK_INT > 23 && !sdcard)
                         addOption("-P", "temp:" + getExternalTempDir())
+                    // Real output paths, the title-based scan misses renamed/merged files
+                    addCommands(listOf("--print-to-file", "after_move:filepath", pathsFile.absolutePath))
 
                     if (splitByChapter) {
                         addOption("-o", OUTPUT_TEMPLATE_CHAPTERS)
@@ -812,6 +823,7 @@ object DownloadUtil {
                             videoInfo = videoInfo,
                             downloadPath = pathBuilder.toString(),
                             sdcardUri = sdcardUri,
+                            pathsFile = pathsFile,
                         )
                     } else Result.failure(th)
                 }
@@ -820,6 +832,7 @@ object DownloadUtil {
                 videoInfo = videoInfo,
                 downloadPath = pathBuilder.toString(),
                 sdcardUri = sdcardUri,
+                pathsFile = pathsFile,
             )
         }
     }
@@ -829,8 +842,18 @@ object DownloadUtil {
         videoInfo: VideoInfo,
         downloadPath: String,
         sdcardUri: String,
+        pathsFile: File? = null,
     ): Result<List<String>> =
         preferences.run {
+            val printedPaths =
+                pathsFile
+                    ?.takeIf { it.exists() }
+                    ?.readLines()
+                    ?.filter { it.isNotBlank() && File(it).exists() }
+                    ?.distinct()
+                    .orEmpty()
+            pathsFile?.delete()
+
             val fileName =
                 preferences.newTitle.ifEmpty {
                     videoInfo.filename
@@ -854,10 +877,20 @@ object DownloadUtil {
                         }
                     }
             } else {
-                FileUtil.scanFileToMediaLibraryPostDownload(
-                        title = fileName,
-                        downloadDir = downloadPath,
-                    )
+                (if (printedPaths.isNotEmpty()) {
+                        MediaScannerConnection.scanFile(
+                            context,
+                            printedPaths.toTypedArray(),
+                            null,
+                            null,
+                        )
+                        printedPaths
+                    } else {
+                        FileUtil.scanFileToMediaLibraryPostDownload(
+                            title = fileName,
+                            downloadDir = downloadPath,
+                        )
+                    })
                     .run {
                         if (privateMode) Result.success(emptyList())
                         else

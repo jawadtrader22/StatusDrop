@@ -83,6 +83,9 @@ const val USER_AGENT_STRING = "user_agent_string"
 const val AUTO_UPDATE = "auto_update"
 const val UPDATE_CHANNEL = "update_channel"
 const val PRIVATE_MODE = "private_mode"
+/** Unset until the user picks on first launch; see AutoDeleteChoiceDialog. */
+const val STATUS_AUTO_DELETE = "status_auto_delete"
+const val PENDING_STATUS_DELETES = "pending_status_deletes"
 private const val DYNAMIC_COLOR = "dynamic_color"
 const val CELLULAR_DOWNLOAD = "cellular_download"
 const val RATE_LIMIT = "rate_limit"
@@ -120,7 +123,7 @@ private const val INTERVAL_DAY = 86_400_000L
 private const val INTERVAL_WEEK = 86_400_000L * 7
 private const val INTERVAL_MONTH = 86_400_000L * 30
 
-const val DEFAULT_INTERVAL = INTERVAL_WEEK // every week
+const val DEFAULT_INTERVAL = INTERVAL_DAY // extractors for FB/IG break often
 
 val UpdateIntervalList =
     mapOf(
@@ -211,7 +214,7 @@ private val StringPreferenceDefaults =
 
 private val BooleanPreferenceDefaults =
     mapOf(
-        FORMAT_SELECTION to true,
+        FORMAT_SELECTION to false,
         CONFIGURE to true,
         CELLULAR_DOWNLOAD to false,
         YT_DLP_AUTO_UPDATE to true,
@@ -229,8 +232,8 @@ private val IntPreferenceDefaults =
         DARK_THEME_VALUE to DarkThemePreference.FOLLOW_SYSTEM,
         WELCOME_DIALOG to 1,
         AUDIO_CONVERSION_FORMAT to NOT_SPECIFIED,
-        VIDEO_QUALITY to NOT_SPECIFIED,
-        VIDEO_FORMAT to FORMAT_QUALITY,
+        VIDEO_QUALITY to 4, // 720p: WhatsApp squeezes Status to ~720p anyway, so smaller and faster
+        VIDEO_FORMAT to FORMAT_COMPATIBILITY,
         UPDATE_CHANNEL to STABLE,
         SHOW_SPONSOR_MSG to 0,
         CONVERT_SUBTITLE to NOT_SPECIFIED,

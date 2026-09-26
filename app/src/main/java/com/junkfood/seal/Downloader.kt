@@ -426,6 +426,7 @@ object Downloader {
                                     PendingIntent.FLAG_IMMUTABLE,
                                 )
                             else null,
+                        filePath = it.firstOrNull(),
                     )
                 }
             }

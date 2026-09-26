@@ -12,6 +12,8 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
+import android.system.OsConstants
+import android.system.Os
 import android.os.IBinder
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
@@ -38,11 +40,18 @@ import com.junkfood.seal.util.SDCARD_URI
 import com.junkfood.seal.util.UpdateUtil
 import com.junkfood.seal.util.VIDEO_DIRECTORY
 import com.junkfood.seal.util.YT_DLP_VERSION
+import kotlinx.coroutines.withTimeoutOrNull
+import com.junkfood.seal.util.PreferenceUtil.getLong
+import com.junkfood.seal.util.PreferenceUtil.getBoolean
+import com.junkfood.seal.util.YT_DLP_UPDATE_TIME
+import com.junkfood.seal.util.YT_DLP_UPDATE_INTERVAL
+import com.junkfood.seal.util.YT_DLP_AUTO_UPDATE
 import com.tencent.mmkv.MMKV
 import com.yausername.aria2c.Aria2c
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import java.io.File
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -90,13 +99,29 @@ class App : Application() {
             try {
                 YoutubeDL.init(this@App)
                 FFmpeg.init(this@App)
+                replaceUnalignedWebpLibs()
+                FileUtil.purgePendingStatusDeletes()
                 Aria2c.init(this@App)
                 DownloadUtil.getCookiesContentFromDatabase().getOrNull()?.let {
                     FileUtil.writeContentToFile(it, getCookiesFile())
                 }
                 UpdateUtil.deleteOutdatedApk()
+                // Shared links skip the main UI, so refresh yt-dlp here before the first task
+                // runs; the bundled build is too old for Facebook/Instagram
+                val updateDue =
+                    System.currentTimeMillis() >=
+                        YT_DLP_UPDATE_TIME.getLong() + YT_DLP_UPDATE_INTERVAL.getLong()
+                // ~3 MB, so mobile data is fine; a stale yt-dlp breaks TikTok/Instagram outright
+                if (YT_DLP_AUTO_UPDATE.getBoolean() && updateDue) {
+                    val neverUpdated = YT_DLP_VERSION.getString().isEmpty()
+                    withTimeoutOrNull(if (neverUpdated) 120_000 else 30_000) {
+                        runCatching { UpdateUtil.updateYtDlp() }
+                    }
+                }
             } catch (th: Throwable) {
                 withContext(Dispatchers.Main) { startCrashReportActivity(th) }
+            } finally {
+                ytdlpReady.complete(Unit)
             }
         }
 
@@ -109,6 +134,23 @@ class App : Application() {
         if (Build.VERSION.SDK_INT >= 26) NotificationUtil.createNotificationChannel()
 
         Thread.setDefaultUncaughtExceptionHandler { _, e -> startCrashReportActivity(e) }
+    }
+
+    /**
+     * The ffmpeg bundled by youtubedl-android links 4 KB-aligned libwebp, so on 16 KB page devices
+     * the linker rejects it and yt-dlp reports "ffmpeg not found". Swap in our 16 KB builds
+     * (scripts/build-webp-16k.sh). 4 KB devices keep the stock files untouched.
+     */
+    private fun replaceUnalignedWebpLibs() {
+        if (Os.sysconf(OsConstants._SC_PAGESIZE) <= 4096) return
+        val ffmpegLibDir = File(noBackupFilesDir, "youtubedl-android/packages/ffmpeg/usr/lib")
+        for (name in listOf("webp", "sharpyuv", "webpdecoder", "webpdemux", "webpmux")) {
+            val src = File(applicationInfo.nativeLibraryDir, "libsd16k_$name.so")
+            val dst = File(ffmpegLibDir, "lib$name.so")
+            if (src.exists() && dst.exists() && src.length() != dst.length()) {
+                src.copyTo(dst, overwrite = true)
+            }
+        }
     }
 
     private fun startCrashReportActivity(th: Throwable) {
@@ -132,6 +174,9 @@ class App : Application() {
         lateinit var packageInfo: PackageInfo
 
         var isServiceRunning = false
+
+        /** Completes once yt-dlp/ffmpeg are unpacked; a shared link can arrive before that. */
+        val ytdlpReady = CompletableDeferred<Unit>()
 
         private val connection =
             object : ServiceConnection {

@@ -10,6 +10,7 @@ import com.junkfood.seal.database.backup.BackupUtil
 import com.junkfood.seal.database.backup.BackupUtil.decodeToBackup
 import com.junkfood.seal.database.objects.DownloadedVideoInfo
 import com.junkfood.seal.util.DatabaseUtil
+import com.junkfood.seal.util.Platform
 import com.junkfood.seal.util.FileUtil.getFileSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -54,7 +55,7 @@ class VideoListViewModel : ViewModel() {
 
     val filterSetFlow =
         searchedVideoListFlow.map { infoList ->
-            mutableSetOf<String>().apply { infoList.forEach { this.add(it.extractor) } }
+            infoList.mapTo(linkedSetOf()) { Platform.of(it.videoUrl).label }
         }
 
     val fileSizeMapFlow =
