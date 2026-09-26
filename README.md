@@ -12,7 +12,7 @@
 
 1. Open any **public** video/reel/short (Facebook, Instagram, TikTok, X, and 1000+ sites).
 2. Tap **Share → StatusDrop**. The video downloads on your phone.
-3. Tap **Share to Status** (in the app or in the notification) → pick **My status**.
+3. Tap **Share to WhatsApp** (in the app or in the notification) → pick **My status**.
 
 Everything runs on your phone. No server, no account, no ads.
 

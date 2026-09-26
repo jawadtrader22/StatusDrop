@@ -1,15 +1,15 @@
 <resources>
     <string name="app_name" translatable="false">StatusDrop</string>
-    <string name="share_to_status">Share to Status</string>
-    <string name="ready_to_share">Ready! Post it to your Status</string>
+    <string name="share_to_status">Share to WhatsApp</string>
+    <string name="ready_to_share">Ready! Share it to WhatsApp</string>
     <string name="more_options">More options</string>
     <string name="paste_link_hint">Paste a video link</string>
     <string name="share_app">Share StatusDrop</string>
-    <string name="auto_delete_title">After posting to Status?</string>
-    <string name="auto_delete_desc">StatusDrop can remove the downloaded video from your phone 15 minutes after you share it to Status, so your gallery stays clean.\n\nYour history and links are kept, so you can re-download any video later.\n\nYou can change this anytime in Settings.</string>
+    <string name="auto_delete_title">After sharing to WhatsApp?</string>
+    <string name="auto_delete_desc">StatusDrop can remove the downloaded video from your phone 15 minutes after you share it to WhatsApp, so your gallery stays clean.\n\nYour history and links are kept, so you can re-download any video later.\n\nYou can change this anytime in Settings.</string>
     <string name="auto_delete_yes">Auto-delete</string>
     <string name="auto_delete_no">Keep videos</string>
-    <string name="auto_delete_setting">Auto-delete after sharing to Status</string>
+    <string name="auto_delete_setting">Auto-delete after sharing to WhatsApp</string>
     <string name="auto_delete_setting_desc">Remove the video file 15 min after you post it. History and links are kept.</string>
     <string name="file_not_on_device">This video is no longer on your phone</string>
     <string name="file_not_on_device_desc">It was deleted after sharing, or removed from storage. Download it again from the saved link?</string>
@@ -18,7 +18,7 @@
     <string name="current_version">Current version: %1$s</string>
     <string name="developer">Developer</string>
     <string name="developer_desc">Jawad · Crystal AI Systems\nTelegram: %1$s</string>
-    <string name="share_app_msg">Download any public reel or video and post it to your Status in one tap. Free, no ads: %1$s</string>
+    <string name="share_app_msg">Download any public reel or video and share it to WhatsApp in one tap. Free, no ads: %1$s</string>
     <string name="unsupported_link">That is not a valid link</string>
     <string name="video_directory">Video folder</string>
     <string name="extract_audio">Save as audio</string>
