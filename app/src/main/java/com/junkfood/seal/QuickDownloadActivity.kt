@@ -65,6 +65,7 @@ import com.junkfood.seal.ui.component.PlatformChip
 import com.junkfood.seal.ui.theme.SealTheme
 import com.junkfood.seal.util.DownloadUtil
 import com.junkfood.seal.util.FileUtil
+import com.junkfood.seal.util.FriendlyError
 import com.junkfood.seal.util.Platform
 import com.junkfood.seal.util.PreferenceUtil
 import com.junkfood.seal.util.getErrorReport
@@ -281,17 +282,26 @@ private fun QuickSharePanel(
                         }
                     }
                     is Error -> {
+                        val raw = downloadState.throwable.message
                         Text(
-                            downloadState.throwable.message ?: stringResource(R.string.status_error),
-                            style = MaterialTheme.typography.bodyMedium,
+                            stringResource(FriendlyError.of(raw).messageRes),
+                            style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.error,
-                            maxLines = 4,
-                            overflow = TextOverflow.Ellipsis,
                         )
+                        // raw yt-dlp line, small, for anyone reporting the problem
+                        raw?.let {
+                            Text(
+                                it.lineSequence().firstOrNull { l -> l.startsWith("ERROR") } ?: it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(onClick = onRetry, modifier = Modifier.weight(1f)) {
                                 Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
-                                Text(stringResource(R.string.resume), Modifier.padding(start = 6.dp))
+                                Text(stringResource(R.string.retry), Modifier.padding(start = 6.dp))
                             }
                             OutlinedButton(
                                 onClick = { onCopyReport(downloadState.throwable) },

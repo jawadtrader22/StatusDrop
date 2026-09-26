@@ -60,6 +60,7 @@ import com.junkfood.seal.util.ToastUtil
 private const val releaseURL = "https://github.com/jawadtrader22/StatusDrop/releases"
 private const val repoUrl = "https://github.com/jawadtrader22/StatusDrop"
 private const val developerTelegram = "https://t.me/Jawadtrader22"
+const val DOWNLOAD_PAGE_URL = "https://jawadtrader22.github.io/StatusDrop/"
 const val TOOLS_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb8dcoh3GJP4jR0UFT3D"
 const val weblate = "https://hosted.weblate.org/engage/seal/"
 const val YtdlpRepository = "https://github.com/yt-dlp/yt-dlp"
@@ -159,7 +160,7 @@ fun AboutPage(
                 item {
                     PreferenceItem(
                         title = stringResource(R.string.share_app),
-                        description = releaseURL,
+                        description = DOWNLOAD_PAGE_URL,
                         icon = Icons.Outlined.Share,
                     ) {
                         context.startActivity(
@@ -168,7 +169,7 @@ fun AboutPage(
                                     .setType("text/plain")
                                     .putExtra(
                                         Intent.EXTRA_TEXT,
-                                        context.getString(R.string.share_app_msg, releaseURL),
+                                        context.getString(R.string.share_app_msg, DOWNLOAD_PAGE_URL),
                                     ),
                                 null,
                             )

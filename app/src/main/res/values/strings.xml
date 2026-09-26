@@ -16,6 +16,13 @@
     <string name="join_free_tools">Join for free tools</string>
     <string name="join_free_tools_desc">WhatsApp channel · new free tools and app updates</string>
     <string name="current_version">Current version: %1$s</string>
+    <string name="error_private">This video is private or needs a login. Only public videos can be downloaded.</string>
+    <string name="error_removed">This video was removed or is not available anymore.</string>
+    <string name="error_network">Network problem. Check your internet and tap Retry.</string>
+    <string name="error_unsupported">This link is not supported. Share the video\'s own link.</string>
+    <string name="error_extractor">Could not read this video right now. The app updates its downloader daily, so try again later.</string>
+    <string name="error_unknown">Download failed. Tap Retry.</string>
+    <string name="retry">Retry</string>
     <string name="developer">Developer</string>
     <string name="developer_desc">Jawad · Crystal AI Systems\nTelegram: %1$s</string>
     <string name="share_app_msg">Download any public reel or video and share it to WhatsApp in one tap. Free, no ads: %1$s</string>

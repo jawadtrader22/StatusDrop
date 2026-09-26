@@ -149,6 +149,7 @@ object DownloadUtil {
             val request =
                 YoutubeDLRequest(url).apply {
                     addOption("-o", BASENAME)
+                    addNetworkPatience()
                     if (restrictFilenames) {
                         addOption("--restrict-filenames")
                     }
@@ -544,6 +545,14 @@ object DownloadUtil {
             return@run sorter
         }
 
+    /** Instagram & co. often answer slowly on mobile data; retry instead of failing at once. */
+    private fun YoutubeDLRequest.addNetworkPatience() {
+        addOption("--socket-timeout", "30")
+        addOption("--extractor-retries", "3")
+        addOption("--retries", "10")
+        addOption("--fragment-retries", "10")
+    }
+
     private fun YoutubeDLRequest.applyFormatSorter(
         preferences: DownloadPreferences,
         sorter: String,
@@ -693,6 +702,7 @@ object DownloadUtil {
             request
                 .apply {
                     addOption("--no-mtime")
+                    addNetworkPatience()
                     //                addOption("-v")
                     if (cookies) {
                         enableCookies(userAgentString)

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StatusDrop – Reels to WhatsApp Status in one tap</title>
+<meta name="description" content="Share any public reel or video to StatusDrop and post it to your WhatsApp Status in one tap. Free, no ads, no login.">
+<meta name="theme-color" content="#0A1630">
+<meta property="og:title" content="StatusDrop – Reels to WhatsApp Status in one tap">
+<meta property="og:description" content="Free, no ads. Facebook, Instagram, TikTok, YouTube, X and 1000+ sites.">
+<meta property="og:image" content="https://jawadtrader22.github.io/StatusDrop/og.jpg">
+<meta property="og:url" content="https://jawadtrader22.github.io/StatusDrop/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo.png">
+<style>
+  :root {
+    --bg: #0A1630; --bg2: #101f42; --card: #14244b; --line: #22345f;
+    --text: #EEF2FF; --muted: #A7B3D6;
+    --blue: #2F7BFF; --purple: #8B5CF6; --orange: #FFA928; --green: #25D366;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1d3a7a 0%, var(--bg) 60%) fixed, var(--bg);
+    color: var(--text); line-height: 1.5; min-height: 100vh;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+  .hero { text-align: center; }
+  .logo { width: 128px; height: 128px; border-radius: 28px; box-shadow: 0 12px 40px #2f7bff55; }
+  h1 { font-size: clamp(2rem, 7vw, 2.8rem); margin-top: 16px; letter-spacing: -0.5px; }
+  h1 .drop { background: linear-gradient(90deg, var(--orange), #ffd166); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tag { color: var(--muted); font-size: 1.1rem; margin-top: 8px; }
+  .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .badge { font-size: .8rem; padding: 4px 10px; border-radius: 99px; background: #ffffff12; border: 1px solid var(--line); }
+
+  .dl { margin: 28px auto 0; max-width: 420px; }
+  .btn {
+    position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%; padding: 18px 20px; border-radius: 18px; text-decoration: none; color: #fff;
+    font-size: 1.25rem; font-weight: 700;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    box-shadow: 0 10px 30px #2f7bff66; transition: transform .15s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn::after { /* moving shine = "downloader" feel */
+    content: ""; position: absolute; inset: 0; width: 40%;
+    background: linear-gradient(90deg, transparent, #ffffff40, transparent);
+    transform: translateX(-120%); animation: shine 2.6s infinite;
+  }
+  @keyframes shine { 60%, 100% { transform: translateX(260%); } }
+  .btn svg { width: 26px; height: 26px; flex: none; }
+  .meta { text-align: center; color: var(--muted); font-size: .9rem; margin-top: 10px; }
+  .alt { display: block; text-align: center; color: var(--muted); font-size: .85rem; margin-top: 6px; }
+  .alt a { color: #cfd9ff; }
+  .notice { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #ffa92822; border: 1px solid #ffa92866; font-size: .9rem; text-align: center; }
+
+  h2 { font-size: 1.3rem; margin: 44px 0 14px; text-align: center; }
+  .steps { display: grid; gap: 12px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .num { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: linear-gradient(135deg, var(--blue), var(--purple)); }
+  .step .t { display: block; font-weight: 700; }
+  .step .d { color: var(--muted); font-size: .92rem; }
+  .wa { color: var(--green); font-weight: 700; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .feat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+  .feat .i { font-size: 1.4rem; }
+  .feat b { display: block; margin-top: 4px; }
+  .feat span { color: var(--muted); font-size: .85rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: #ffffff10; border: 1px solid var(--line); font-size: .9rem; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin-top: 8px; font-size: .92rem; }
+
+  footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: .88rem; }
+  footer .links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+  footer .links a { color: var(--text); text-decoration: none; padding: 8px 14px; border-radius: 12px; background: #ffffff10; border: 1px solid var(--line); }
+  footer .links a.join { background: #25d36622; border-color: #25d36688; }
+  .small { font-size: .78rem; opacity: .8; margin-top: 10px; }
+  @media (max-width: 380px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <img class="logo" src="logo.png" alt="StatusDrop logo">
+    <h1>Status<span class="drop">Drop</span></h1>
+    <p class="tag">Share any reel → post it to your WhatsApp Status. One tap.</p>
+    <div class="badges">
+      <span class="badge">✅ Free forever</span><span class="badge">🚫 No ads</span><span class="badge">🔒 No login</span>
+    </div>
+
+    <div class="dl">
+      <a id="download" class="btn" href="https://github.com/jawadtrader22/StatusDrop/releases/latest/download/StatusDrop-arm64-v8a.apk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M6 11l6 6 6-6M5 21h14"/></svg>
+        Download APK
+      </a>
+      <p class="meta" id="meta">Android 7.0+ · Free</p>
+      <span class="alt">Old or 32-bit phone? <a id="download32" href="https://github.com/jawadtrader22/StatusDrop/releases/latest/download/StatusDrop-armeabi-v7a.apk">Download this version</a></span>
+      <p class="notice" id="notice">📱 Open this page on your <b>Android phone</b> to install StatusDrop.</p>
+    </div>
+  </section>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><div><span class="t">Share the video link</span><span class="d">In Facebook, Instagram, TikTok or YouTube tap <b>Share</b> → <b>StatusDrop</b>. Or paste the link in the app.</span></div></div>
+    <div class="step"><div class="num">2</div><div><span class="t">It downloads by itself</span><span class="d">A small panel shows live progress. The video is saved in WhatsApp-ready quality.</span></div></div>
+    <div class="step"><div class="num">3</div><div><span class="t">Tap <span class="wa">Share to WhatsApp</span></span><span class="d">Pick <b>My status</b> and post. Done.</span></div></div>
+  </div>
+
+  <h2>Works with</h2>
+  <div class="chips">
+    <span class="chip"><i style="background:#1877F2"></i>Facebook</span>
+    <span class="chip"><i style="background:#E1306C"></i>Instagram</span>
+    <span class="chip"><i style="background:#25F4EE"></i>TikTok</span>
+    <span class="chip"><i style="background:#FF0000"></i>YouTube</span>
+    <span class="chip"><i style="background:#8899A6"></i>X / Twitter</span>
+    <span class="chip"><i style="background:#E60023"></i>Pinterest</span>
+    <span class="chip"><i style="background:#7E57C2"></i>1000+ sites</span>
+  </div>
+
+  <h2>Why StatusDrop</h2>
+  <div class="grid">
+    <div class="feat"><div class="i">⚡</div><b>One tap</b><span>No copy, no gallery hunting.</span></div>
+    <div class="feat"><div class="i">🧹</div><b>Clean gallery</b><span>Optional auto-delete after sharing.</span></div>
+    <div class="feat"><div class="i">🕘</div><b>History</b><span>Re-download any video from its link.</span></div>
+    <div class="feat"><div class="i">📱</div><b>Runs on your phone</b><span>No servers. Your links stay private.</span></div>
+  </div>
+
+  <h2>Installing</h2>
+  <details open>
+    <summary>Phone says "blocked" or "unknown app"?</summary>
+    <p>That is normal for apps outside the Play Store. Tap <b>Settings</b> on the pop-up → turn on <b>Allow from this source</b> → go back and tap <b>Install</b>.</p>
+  </details>
+  <details>
+    <summary>Is it safe?</summary>
+    <p>Yes. StatusDrop is open source, so anyone can check the code. It has no ads, no trackers and needs no account.</p>
+  </details>
+  <details>
+    <summary>How do I update?</summary>
+    <p>Open StatusDrop → <b>Settings</b> → <b>Check for updates</b>. Or download again from this page.</p>
+  </details>
+  <details>
+    <summary>A video won't download?</summary>
+    <p>Only <b>public</b> videos work. Private videos, or ones that need a login, can't be downloaded. The app tells you when that's the case.</p>
+  </details>
+
+  <footer>
+    <div>Made by <b>Jawad · Crystal AI Systems</b></div>
+    <div class="links">
+      <a class="join" href="https://whatsapp.com/channel/0029Vb8dcoh3GJP4jR0UFT3D">🟢 Join for free tools</a>
+      <a href="https://t.me/Jawadtrader22">✈️ Telegram</a>
+      <a href="https://github.com/jawadtrader22/StatusDrop">💻 Source code</a>
+    </div>
+    <p class="small">Based on Seal (GPL-3.0) · Powered by yt-dlp · Not affiliated with WhatsApp, Meta or any video platform. Only download content you have the right to share.</p>
+  </footer>
+</main>
+<script>
+  // Not on Android: explain where to open the page instead of downloading an APK to a PC/iPhone
+  if (!/android/i.test(navigator.userAgent)) document.getElementById("notice").style.display = "block";
+
+  // Show the real version and size of the latest release (the page still works if this fails)
+  fetch("https://api.github.com/repos/jawadtrader22/StatusDrop/releases/latest")
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(rel => {
+      const apk = (rel.assets || []).find(a => a.name === "StatusDrop-arm64-v8a.apk");
+      const mb = apk ? " · " + (apk.size / 1048576).toFixed(0) + " MB" : "";
+      document.getElementById("meta").textContent = "Version " + rel.tag_name.replace(/^v/, "") + mb + " · Android 7.0+ · Free";
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

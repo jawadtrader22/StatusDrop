@@ -21,8 +21,8 @@ Everything runs on your phone. No server, no account, no ads.
 
 ## Download
 
-Grab the latest APK from [Releases](https://github.com/jawadtrader22/StatusDrop/releases/latest).
-Pick `arm64-v8a` for most modern phones, or `universal` if unsure.
+**[Download page](https://jawadtrader22.github.io/StatusDrop/)**: one tap to install. All builds are also on [Releases](https://github.com/jawadtrader22/StatusDrop/releases/latest).
+Most phones need `StatusDrop-arm64-v8a.apk`; very old 32-bit phones need `StatusDrop-armeabi-v7a.apk`.
 
 ## Developer
 
