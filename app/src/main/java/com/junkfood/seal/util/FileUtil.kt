@@ -105,35 +105,56 @@ object FileUtil {
     // WhatsApp still reads the file while the user edits the Status, so delete later
     private const val STATUS_DELETE_DELAY_MS = 15 * 60_000L
 
-    /** Queues [path] for deletion if the user chose auto-delete; the history row is kept. */
-    fun deleteLaterIfAutoDelete(path: String?) {
-        if (path == null || !STATUS_AUTO_DELETE.getBoolean()) return
-        val entries = PENDING_STATUS_DELETES.getString().lines().filter { it.isNotBlank() }
-        PENDING_STATUS_DELETES.updateString(
-            (entries + "${System.currentTimeMillis()}|$path").joinToString("\n")
-        )
+    /** Only our own downloads may ever be auto-deleted, whatever path we are handed. */
+    private fun isOwnDownload(path: String): Boolean {
+        if ('\n' in path) return false
+        val file = runCatching { File(path).canonicalPath }.getOrNull() ?: return false
+        return listOf(App.videoDownloadDir, App.audioDownloadDir).any { dir ->
+            file.startsWith(File(dir).canonicalPath + File.separator)
+        }
+    }
+
+    private fun scheduleStatusPurge(delayMs: Long) {
         App.applicationScope.launch {
-            delay(STATUS_DELETE_DELAY_MS)
+            delay(delayMs)
             purgePendingStatusDeletes()
         }
     }
 
-    /** Also runs on app start, in case the process died before the delay ran out. */
+    /** Queues [path] for deletion if the user chose auto-delete; the history row is kept. */
+    @Synchronized
+    fun deleteLaterIfAutoDelete(path: String?) {
+        if (path == null || !STATUS_AUTO_DELETE.getBoolean() || !isOwnDownload(path)) return
+        val entries = PENDING_STATUS_DELETES.getString().lines().filter { it.isNotBlank() }
+        PENDING_STATUS_DELETES.updateString(
+            (entries + "${System.currentTimeMillis()}|$path").joinToString("\n")
+        )
+        scheduleStatusPurge(STATUS_DELETE_DELAY_MS)
+    }
+
+    /** Runs on app start too, in case the process died before the delay ran out. */
     @Synchronized
     fun purgePendingStatusDeletes() {
         val now = System.currentTimeMillis()
-        val (due, waiting) =
-            PENDING_STATUS_DELETES.getString()
-                .lines()
-                .filter { it.substringBefore('|').toLongOrNull() != null }
-                .partition { it.substringBefore('|').toLong() + STATUS_DELETE_DELAY_MS <= now }
-        due.map { it.substringAfter('|') }
-            .forEach { path ->
-                deleteFile(path)
-                // drop it from the gallery index too
-                MediaScannerConnection.scanFile(context, arrayOf(path), null, null)
+        val entries =
+            PENDING_STATUS_DELETES.getString().lines().mapNotNull { line ->
+                line.substringBefore('|').toLongOrNull()?.let { it to line.substringAfter('|') }
             }
-        PENDING_STATUS_DELETES.updateString(waiting.joinToString("\n"))
+        // switched off meanwhile: keep every file
+        if (!STATUS_AUTO_DELETE.getBoolean()) {
+            PENDING_STATUS_DELETES.updateString("")
+            return
+        }
+        val (due, waiting) = entries.partition { (ts, _) -> ts + STATUS_DELETE_DELAY_MS <= now }
+        due.forEach { (queuedAt, path) ->
+            // re-downloaded after it was queued (--no-mtime keeps mtime = write time): keep it
+            if (!isOwnDownload(path) || File(path).lastModified() > queuedAt) return@forEach
+            deleteFile(path)
+            // drop it from the gallery index too
+            MediaScannerConnection.scanFile(context, arrayOf(path), null, null)
+        }
+        PENDING_STATUS_DELETES.updateString(waiting.joinToString("\n") { (ts, p) -> "$ts|$p" })
+        waiting.minOfOrNull { it.first }?.let { scheduleStatusPurge(it + STATUS_DELETE_DELAY_MS - now) }
     }
 
     fun Context.getFileProvider() = "$packageName.provider"

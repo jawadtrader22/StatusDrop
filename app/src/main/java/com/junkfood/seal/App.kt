@@ -100,7 +100,6 @@ class App : Application() {
                 YoutubeDL.init(this@App)
                 FFmpeg.init(this@App)
                 replaceUnalignedWebpLibs()
-                FileUtil.purgePendingStatusDeletes()
                 Aria2c.init(this@App)
                 DownloadUtil.getCookiesContentFromDatabase().getOrNull()?.let {
                     FileUtil.writeContentToFile(it, getCookiesFile())
@@ -114,9 +113,13 @@ class App : Application() {
                 // ~3 MB, so mobile data is fine; a stale yt-dlp breaks TikTok/Instagram outright
                 if (YT_DLP_AUTO_UPDATE.getBoolean() && updateDue) {
                     val neverUpdated = YT_DLP_VERSION.getString().isEmpty()
-                    withTimeoutOrNull(if (neverUpdated) 120_000 else 30_000) {
-                        runCatching { UpdateUtil.updateYtDlp() }
-                    }
+                    // the updater blocks and ignores cancellation, so run it apart and stop
+                    // *waiting* on timeout; a stalled network must not hold every download
+                    val update =
+                        applicationScope.launch(Dispatchers.IO) {
+                            runCatching { UpdateUtil.updateYtDlp() }
+                        }
+                    withTimeoutOrNull(if (neverUpdated) 120_000 else 30_000) { update.join() }
                 }
             } catch (th: Throwable) {
                 withContext(Dispatchers.Main) { startCrashReportActivity(th) }
@@ -132,6 +135,8 @@ class App : Application() {
             COMMAND_DIRECTORY.updateString(videoDownloadDir)
         }
         if (Build.VERSION.SDK_INT >= 26) NotificationUtil.createNotificationChannel()
+        // after the download dirs above are set; deletes left over from a killed process
+        applicationScope.launch(Dispatchers.IO) { FileUtil.purgePendingStatusDeletes() }
 
         Thread.setDefaultUncaughtExceptionHandler { _, e -> startCrashReportActivity(e) }
     }

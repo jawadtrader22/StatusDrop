@@ -877,7 +877,7 @@ object DownloadUtil {
                         }
                     }
             } else {
-                (if (printedPaths.isNotEmpty()) {
+                (if (printedPaths.isNotEmpty() && !splitByChapter) {
                         MediaScannerConnection.scanFile(
                             context,
                             printedPaths.toTypedArray(),

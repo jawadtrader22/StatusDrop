@@ -21,7 +21,7 @@ import com.junkfood.seal.NotificationActionReceiver.Companion.ACTION_KEY
 import com.junkfood.seal.NotificationActionReceiver.Companion.ERROR_REPORT_KEY
 import com.junkfood.seal.NotificationActionReceiver.Companion.NOTIFICATION_ID_KEY
 import com.junkfood.seal.NotificationActionReceiver.Companion.TASK_ID_KEY
-import com.junkfood.seal.QuickDownloadActivity
+import com.junkfood.seal.StatusShareActivity
 import com.junkfood.seal.R
 import com.junkfood.seal.util.PreferenceUtil.getBoolean
 
@@ -126,11 +126,10 @@ object NotificationUtil {
         title?.let { builder.setContentTitle(title) }
         intent?.let { builder.setContentIntent(intent) }
         if (filePath != null) {
-            // routed through QuickDownloadActivity so the auto-delete gets queued too
+            // routed through an activity so the auto-delete gets queued too
             val intent =
-                Intent(context, QuickDownloadActivity::class.java)
-                    .setAction(QuickDownloadActivity.ACTION_SHARE_TO_STATUS)
-                    .putExtra(QuickDownloadActivity.EXTRA_FILE_PATH, filePath)
+                Intent(context, StatusShareActivity::class.java)
+                    .putExtra(StatusShareActivity.EXTRA_FILE_PATH, filePath)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             builder.addAction(
                 R.drawable.ic_stat_seal,

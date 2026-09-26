@@ -76,36 +76,22 @@ import org.koin.android.ext.android.inject
 
 /** Share a link here → it downloads straight away → one tap to post it to WhatsApp Status. */
 class QuickDownloadActivity : ComponentActivity() {
-    companion object {
-        const val ACTION_SHARE_TO_STATUS = "com.statusdrop.action.SHARE_TO_STATUS"
-        const val EXTRA_FILE_PATH = "file_path"
-    }
-
     private val downloader: DownloaderV2 by inject()
 
     private fun Intent.getSharedURL(): String? =
         when (action) {
             Intent.ACTION_VIEW -> dataString
             Intent.ACTION_SEND ->
-                getStringExtra(Intent.EXTRA_TEXT)?.let { sharedContent ->
-                    removeExtra(Intent.EXTRA_TEXT)
-                    matchUrlFromSharedText(sharedContent)
-                }
+                // kept in the intent so a rotation/theme recreate still finds the link
+                getStringExtra(Intent.EXTRA_TEXT)?.let { matchUrlFromSharedText(it) }
             else -> null
         }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.action == ACTION_SHARE_TO_STATUS) {
-            if (!shareToStatus(intent.getStringExtra(EXTRA_FILE_PATH))) {
-                makeToast(R.string.file_unavailable)
-            }
-            finish()
-        } else {
-            // another link shared while the panel is open: show that one instead
-            setIntent(intent)
-            recreate()
-        }
+        // another link shared while the panel is open: show that one instead
+        setIntent(intent)
+        recreate()
     }
 
     /** Shares to WhatsApp and queues the auto-delete; false if the file is gone. */
@@ -119,14 +105,6 @@ class QuickDownloadActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // notification "Share to Status" action; a receiver can't start activities on 12+
-        if (intent.action == ACTION_SHARE_TO_STATUS) {
-            if (!shareToStatus(intent.getStringExtra(EXTRA_FILE_PATH))) {
-                makeToast(R.string.file_unavailable)
-            }
-            finish()
-            return
-        }
         val url = intent.getSharedURL()
         if (url.isNullOrEmpty()) {
             finish()
@@ -148,8 +126,11 @@ class QuickDownloadActivity : ComponentActivity() {
 
         val task = Task(url = url, preferences = DownloadUtil.DownloadPreferences.createFromPreferences())
         val existing = downloader.getTaskStateMap()[task]?.downloadState
-        // same link shared twice: keep the running/finished task instead of starting over
-        if (existing == null || existing is Error || existing is Canceled) {
+        // same link shared twice: keep the running/finished task instead of starting over,
+        // unless its file is gone (auto-deleted) and needs downloading again
+        val fileGone =
+            existing is Completed && FileUtil.createIntentForOpeningFile(existing.filePath) == null
+        if (existing == null || existing is Error || existing is Canceled || fileGone) {
             if (existing != null) downloader.remove(task)
             downloader.enqueue(task)
         }

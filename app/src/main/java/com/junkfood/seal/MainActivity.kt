@@ -48,7 +48,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
         // cold start: onNewIntent is not called for the launching intent
-        if (savedInstanceState == null) handleSharedUrl(intent)
+        // recents relaunch re-delivers the old link; only a fresh launch should open it
+        val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        if (savedInstanceState == null && !fromHistory) handleSharedUrl(intent)
     }
 
     override fun onNewIntent(intent: Intent) {

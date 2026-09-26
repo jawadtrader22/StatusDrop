@@ -73,6 +73,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".StatusShareActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <service
             android:name=".DownloadService"
             android:enabled="true"
