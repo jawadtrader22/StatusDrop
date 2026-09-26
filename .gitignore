@@ -17,3 +17,7 @@
 local.properties
 /keystore.properties
 .kotlin
+# Signing secrets: never commit
+/Keys/
+*.jks
+*.keystore
