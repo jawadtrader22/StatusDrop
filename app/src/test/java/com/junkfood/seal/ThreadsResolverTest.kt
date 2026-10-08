@@ -59,6 +59,22 @@ class ThreadsResolverTest {
     }
 
     @Test
+    fun findsVideoLinkedInsideATextPost() {
+        // media_type 19 text post whose video sits in linked_inline_media (from a real share link)
+        val media =
+            ThreadsResolver.parse(
+                page(
+                    """{"code":"TXT","media_type":19,"video_versions":null,"carousel_media":null,""" +
+                        """"caption":{"text":"Look"},"text_post_app_info":{"linked_inline_media":""" +
+                        """{"code":"VID","media_type":2,"video_versions":[{"type":101,"url":"https:\/\/cdn\/in.mp4"}]}}}"""
+                ),
+                "TXT",
+            )
+        assertEquals("https://cdn/in.mp4", media?.videoUrl)
+        assertEquals("Look", media?.title)
+    }
+
+    @Test
     fun photoOnlyOrOtherPostGivesNull() {
         assertNull(ThreadsResolver.parse(page("""{"code":"PIC","video_versions":null}"""), "PIC"))
         assertNull(ThreadsResolver.parse(page("""{"code":"ABC","video_versions":[{"url":"x"}]}"""), "ZZZ"))

@@ -193,7 +193,7 @@ object DownloadUtil {
                     info.copy(
                         originalUrl = url,
                         webpageUrl = url,
-                        id = ThreadsResolver.postCode(url) ?: info.id,
+                        id = it.code,
                         title = it.title ?: info.title,
                         thumbnail = it.thumbnail ?: info.thumbnail,
                         extractorKey = "Threads",
@@ -695,6 +695,7 @@ object DownloadUtil {
         playlistItem: Int = 0,
         taskId: String,
         downloadPreferences: DownloadPreferences,
+        nameSuffix: String = "",
         progressCallback: ((Float, Long, String) -> Unit)?,
     ): Result<List<String>> {
         if (videoInfo == null)
@@ -815,9 +816,7 @@ object DownloadUtil {
                     }
                     // a direct MP4's id/title are its long CDN hash, which overflows the file name
                     if (threads != null) {
-                        ThreadsResolver.postCode(url)?.let {
-                            addCommands(listOf("--replace-in-metadata", "id", ".+", it))
-                        }
+                        addCommands(listOf("--replace-in-metadata", "id", ".+", threads.code))
                     }
                     val title = newTitle.ifEmpty { if (threads != null) videoInfo.title else "" }
                     if (title.isNotEmpty()) {
@@ -839,7 +838,7 @@ object DownloadUtil {
                         if (splitByChapter) {
                             OUTPUT_TEMPLATE_SPLIT
                         } else if (videoClips.isEmpty()) {
-                            outputTemplate
+                            outputTemplate.replace(".%(ext)s", "$nameSuffix.%(ext)s")
                         } else {
                             OUTPUT_TEMPLATE_CLIPS
                         }
@@ -865,6 +864,21 @@ object DownloadUtil {
                             downloadPath = pathBuilder.toString(),
                             sdcardUri = sdcardUri,
                             pathsFile = pathsFile,
+                        )
+                    } else if (
+                        nameSuffix.isEmpty() &&
+                            th.message?.contains("Permission denied") == true
+                    ) {
+                        // a file of the same name left by a previous install (or its tmp part)
+                        // belongs to another app id and can't be read; save under a new name
+                        downloadVideo(
+                            videoInfo = videoInfo,
+                            playlistUrl = playlistUrl,
+                            playlistItem = playlistItem,
+                            taskId = taskId,
+                            downloadPreferences = downloadPreferences,
+                            progressCallback = progressCallback,
+                            nameSuffix = " (2)",
                         )
                     } else Result.failure(th)
                 }

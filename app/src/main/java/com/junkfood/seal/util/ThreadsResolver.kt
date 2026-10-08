@@ -16,7 +16,7 @@ import okhttp3.Request
  * ponytail: depends on Meta's page JSON; drop this once yt-dlp ships a Threads extractor.
  */
 object ThreadsResolver {
-    data class Media(val videoUrl: String, val title: String?, val thumbnail: String?)
+    data class Media(val code: String, val videoUrl: String, val title: String?, val thumbnail: String?)
 
     private val client = OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build()
     private val json = Json { isLenient = true }
@@ -27,12 +27,14 @@ object ThreadsResolver {
 
     /** Null when the post has no public video (photo-only, private, removed, or page changed). */
     fun resolve(url: String): Media? {
-        val code = postCode(url) ?: return null
-        val html = runCatching { fetch(url) }.getOrNull() ?: return null
+        val (html, finalUrl) = runCatching { fetch(url) }.getOrNull() ?: return null
+        // share links (threads.com/share/xyz) only reveal the post code after their redirect
+        val code = postCode(finalUrl) ?: postCode(url) ?: return null
         return parse(html, code)
     }
 
-    private fun fetch(url: String): String? {
+    /** Page HTML and the URL it ended on after redirects. */
+    private fun fetch(url: String): Pair<String, String>? {
         // the mobile page is a JS shell; the desktop one carries the post JSON
         val request =
             Request.Builder()
@@ -47,7 +49,9 @@ object ThreadsResolver {
                 .header("Sec-Fetch-Mode", "navigate")
                 .header("Sec-Fetch-Dest", "document")
                 .build()
-        return client.newCall(request).execute().use { if (it.isSuccessful) it.body.string() else null }
+        return client.newCall(request).execute().use {
+            if (it.isSuccessful) it.body.string() to it.request.url.toString() else null
+        }
     }
 
     fun parse(html: String, code: String): Media? {
@@ -60,26 +64,18 @@ object ThreadsResolver {
                 .mapNotNull { runCatching { json.parseToJsonElement(it) }.getOrNull() }
                 .flatMap { collectPosts(it, code) }
                 .toList()
-        val video =
-            posts.firstNotNullOfOrNull { post ->
-                post.firstVideoUrl()
-                    ?: (post["carousel_media"] as? JsonArray)?.firstNotNullOfOrNull {
-                        (it as? JsonObject)?.firstVideoUrl()
-                    }
-            } ?: return null
+        // own video first, then carousel items, then media embedded in the post
+        // (text posts carry it under text_post_app_info.linked_inline_media)
+        val video = posts.firstNotNullOfOrNull { firstVideoUrl(it) } ?: return null
         return Media(
+            code = code,
             videoUrl = video,
             title =
                 posts.firstNotNullOfOrNull { it.string("caption", "text") }
                     ?.lineSequence()
                     ?.firstOrNull { line -> line.isNotBlank() }
                     ?.take(80),
-            thumbnail =
-                posts.firstNotNullOfOrNull { post ->
-                    ((post["image_versions2"] as? JsonObject)?.get("candidates") as? JsonArray)
-                        ?.firstOrNull()
-                        ?.let { (it as? JsonObject)?.string("url") }
-                },
+            thumbnail = posts.firstNotNullOfOrNull { firstThumbnail(it) },
         )
     }
 
@@ -92,9 +88,28 @@ object ThreadsResolver {
             else -> emptyList()
         }
 
-    // video_versions is ordered best first
-    private fun JsonObject.firstVideoUrl(): String? =
-        (this["video_versions"] as? JsonArray)?.firstOrNull()?.let { (it as? JsonObject)?.string("url") }
+    // same search for the cover image, so text posts with embedded videos get one too
+    private fun firstThumbnail(element: JsonElement): String? =
+        when (element) {
+            is JsonObject ->
+                ((element["image_versions2"] as? JsonObject)?.get("candidates") as? JsonArray)
+                    ?.firstOrNull()
+                    ?.let { (it as? JsonObject)?.string("url") }
+                    ?: element.values.firstNotNullOfOrNull { firstThumbnail(it) }
+            is JsonArray -> element.firstNotNullOfOrNull { firstThumbnail(it) }
+            else -> null
+        }
+
+    // depth-first; video_versions is ordered best first
+    private fun firstVideoUrl(element: JsonElement): String? =
+        when (element) {
+            is JsonObject ->
+                (element["video_versions"] as? JsonArray)?.firstOrNull()?.let {
+                    (it as? JsonObject)?.string("url")
+                } ?: element.values.firstNotNullOfOrNull { firstVideoUrl(it) }
+            is JsonArray -> element.firstNotNullOfOrNull { firstVideoUrl(it) }
+            else -> null
+        }
 
     private fun JsonObject.string(vararg path: String): String? {
         var node: JsonElement = this

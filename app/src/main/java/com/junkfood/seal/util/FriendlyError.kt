@@ -30,7 +30,8 @@ enum class FriendlyError(val messageRes: Int) {
                         "failed to resolve",
                     )
                     .any { it in m } -> Network
-                listOf("unable to extract", "no video formats", "unable to parse").any { it in m } ->
+                listOf("unable to extract", "no video formats", "unable to parse", "cannot parse data")
+                    .any { it in m } ->
                     Extractor
                 else -> Unknown
             }
