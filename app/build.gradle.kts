@@ -47,7 +47,7 @@ android {
         applicationId = "com.statusdrop.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 100_000_400
+        versionCode = 100_010_400
         check(versionCode == currentVersionCode)
 
         versionName = baseVersionName
