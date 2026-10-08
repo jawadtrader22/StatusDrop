@@ -145,9 +145,13 @@ object DownloadUtil {
         taskKey: String? = null,
         preferences: DownloadPreferences = DownloadPreferences.createFromPreferences(),
     ): Result<VideoInfo> {
+        val threads =
+            if (Platform.of(url) == Platform.Threads)
+                ThreadsResolver.resolve(url) ?: return Result.failure(Throwable(THREADS_NO_VIDEO))
+            else null
         with(preferences) {
             val request =
-                YoutubeDLRequest(url).apply {
+                YoutubeDLRequest(threads?.videoUrl ?: url).apply {
                     addOption("-o", BASENAME)
                     addNetworkPatience()
                     if (restrictFilenames) {
@@ -183,9 +187,19 @@ object DownloadUtil {
                     }
                     addOption("-R", "1")
                     addOption("--no-playlist")
-                    addOption("--socket-timeout", "5")
                 }
-            return getVideoInfo(request, taskKey)
+            return getVideoInfo(request, taskKey).map { info ->
+                threads?.let {
+                    info.copy(
+                        originalUrl = url,
+                        webpageUrl = url,
+                        id = ThreadsResolver.postCode(url) ?: info.id,
+                        title = it.title ?: info.title,
+                        thumbnail = it.thumbnail ?: info.thumbnail,
+                        extractorKey = "Threads",
+                    )
+                } ?: info
+            }
         }
     }
 
@@ -546,6 +560,10 @@ object DownloadUtil {
         }
 
     /** Instagram & co. often answer slowly on mobile data; retry instead of failing at once. */
+    // wording matches FriendlyError.PrivateOrLogin ("private"/"login")
+    private const val THREADS_NO_VIDEO =
+        "ERROR: [Threads] No public video found in this post. It may be a photo, private, or need a login."
+
     private fun YoutubeDLRequest.addNetworkPatience() {
         addOption("--socket-timeout", "30")
         addOption("--extractor-retries", "3")
@@ -691,7 +709,11 @@ object DownloadUtil {
                             Throwable(context.getString(R.string.fetch_info_error_msg))
                         )
                 }
-            val request = YoutubeDLRequest(url)
+            val threads =
+                if (Platform.of(url) == Platform.Threads)
+                    ThreadsResolver.resolve(url) ?: return Result.failure(Throwable(THREADS_NO_VIDEO))
+                else null
+            val request = YoutubeDLRequest(threads?.videoUrl ?: url)
             val pathBuilder = StringBuilder()
             val outputBuilder = StringBuilder()
             val pathsFile = File(context.cacheDir, "paths/${taskId.hashCode()}.txt").apply {
@@ -791,8 +813,17 @@ object DownloadUtil {
                             "*%d-%d".format(locale = Locale.US, it.start, it.end),
                         )
                     }
-                    if (newTitle.isNotEmpty()) {
-                        addCommands(listOf("--replace-in-metadata", "title", ".+", newTitle))
+                    // a direct MP4's id/title are its long CDN hash, which overflows the file name
+                    if (threads != null) {
+                        ThreadsResolver.postCode(url)?.let {
+                            addCommands(listOf("--replace-in-metadata", "id", ".+", it))
+                        }
+                    }
+                    val title = newTitle.ifEmpty { if (threads != null) videoInfo.title else "" }
+                    if (title.isNotEmpty()) {
+                        addCommands(
+                            listOf("--replace-in-metadata", "title", ".+", title.replace("\\", "\\\\"))
+                        )
                     }
                     if (Build.VERSION.SDK_INT > 23 && !sdcard)
                         addOption("-P", "temp:" + getExternalTempDir())

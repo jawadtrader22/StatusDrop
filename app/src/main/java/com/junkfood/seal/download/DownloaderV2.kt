@@ -146,7 +146,8 @@ class DownloaderV2Impl(private val appContext: Context) : DownloaderV2, KoinComp
                         }
                     state.copy(downloadState = downloadState)
                 }
-        taskList.forEach(::enqueue)
+        // runs async: a link shared right at startup must not be replaced by its stale backup
+        taskList.forEach { (task, state) -> if (task !in taskStateMap) enqueue(task, state) }
     }
 
     private fun Map<Task, Task.State>.countRunning(): Int = count { (_, state) ->
