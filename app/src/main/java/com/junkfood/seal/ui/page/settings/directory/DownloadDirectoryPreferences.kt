@@ -8,7 +8,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
@@ -180,8 +179,8 @@ fun DownloadDirectoryPreferences(onNavigateBack: () -> Unit) {
     val storagePermission =
         rememberPermissionState(permission = Manifest.permission.WRITE_EXTERNAL_STORAGE)
     val showDirectoryAlert =
+        // no all-files access (it makes Play Protect warn on install): only Download/ and Documents/
         Build.VERSION.SDK_INT >= 30 &&
-            !Environment.isExternalStorageManager() &&
             (!audioDirectoryText.isValidDirectory() ||
                 !videoDirectoryText.isValidDirectory() ||
                 !customCommandDirectory.isValidDirectory())
@@ -261,18 +260,7 @@ fun DownloadDirectoryPreferences(onNavigateBack: () -> Unit) {
                         title = stringResource(R.string.permission_issue),
                         description = stringResource(R.string.permission_issue_desc),
                         icon = Icons.Filled.SdCardAlert,
-                    ) {
-                        if (
-                            Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()
-                        ) {
-                            Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                data = Uri.parse("package:" + context.packageName)
-                                if (resolveActivity(context.packageManager) != null)
-                                    context.startActivity(this)
-                            }
-                        }
-                    }
+                    )
                 }
             item { PreferenceSubtitle(text = stringResource(R.string.general_settings)) }
             if (!isCustomCommandEnabled) {
