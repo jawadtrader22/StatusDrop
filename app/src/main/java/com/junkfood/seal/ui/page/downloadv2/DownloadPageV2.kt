@@ -202,6 +202,7 @@ sealed interface UiAction {
 fun DownloadPageV2(
     modifier: Modifier = Modifier,
     onMenuOpen: (() -> Unit) = {},
+    onStatusesOpen: () -> Unit = {},
     dialogViewModel: DownloadDialogViewModel,
     downloader: DownloaderV2 = koinInject(),
 ) {
@@ -225,6 +226,7 @@ fun DownloadPageV2(
             )
         },
         onMenuOpen = onMenuOpen,
+        onStatusesOpen = onStatusesOpen,
     ) { task, action ->
         view.slightHapticFeedback()
         when (action) {
@@ -337,6 +339,7 @@ fun DownloadPageImplV2(
     downloadCallback: () -> Unit = {},
     onDownloadUrl: (String) -> Unit = {},
     onMenuOpen: (() -> Unit) = {},
+    onStatusesOpen: () -> Unit = {},
     onActionPost: (Task, UiAction) -> Unit,
 ) {
     var activeFilter by remember { mutableStateOf(Filter.All) }
@@ -401,7 +404,11 @@ fun DownloadPageImplV2(
             CompositionLocalProvider(LocalOverscrollFactory provides null) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Spacer(Modifier.height(with(LocalDensity.current) { headerOffset.toDp() }))
-                    Header(onMenuOpen = onMenuOpen, modifier = Modifier.padding(horizontal = 16.dp))
+                    Header(
+                        onMenuOpen = onMenuOpen,
+                        onStatusesOpen = onStatusesOpen,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
                     PasteLinkBar(
                         knownUrls = taskDownloadStateMap.keys.map { it.url }.toSet(),
                         onDownload = onDownloadUrl,
@@ -608,22 +615,42 @@ fun DownloadPageImplV2(
 }
 
 @Composable
-fun Header(modifier: Modifier = Modifier, onMenuOpen: () -> Unit = {}) {
+fun Header(
+    modifier: Modifier = Modifier,
+    onMenuOpen: () -> Unit = {},
+    onStatusesOpen: () -> Unit = {},
+) {
     val windowWidthSizeClass = LocalWindowWidthState.current
     when (windowWidthSizeClass) {
         WindowWidthSizeClass.Expanded -> {
-            HeaderExpanded(modifier = modifier)
+            HeaderExpanded(modifier = modifier, onStatusesOpen = onStatusesOpen)
         }
         else -> {
-            HeaderCompact(modifier = modifier, onMenuOpen = onMenuOpen)
+            HeaderCompact(modifier = modifier, onMenuOpen = onMenuOpen, onStatusesOpen = onStatusesOpen)
         }
     }
 }
 
 @Composable
-private fun HeaderCompact(modifier: Modifier = Modifier, onMenuOpen: () -> Unit) {
+private fun StatusesButton(onClick: () -> Unit) {
+    FilledTonalButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 14.dp)) {
+        Icon(Icons.Rounded.DonutLarge, null, Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(stringResource(R.string.statuses))
+    }
+}
 
-    Row(modifier = modifier.height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+@Composable
+private fun HeaderCompact(
+    modifier: Modifier = Modifier,
+    onMenuOpen: () -> Unit,
+    onStatusesOpen: () -> Unit,
+) {
+
+    Row(
+        modifier = modifier.fillMaxWidth().height(64.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         IconButton(onClick = onMenuOpen, modifier = Modifier) {
             Icon(
                 imageVector = Icons.Outlined.Menu,
@@ -640,17 +667,24 @@ private fun HeaderCompact(modifier: Modifier = Modifier, onMenuOpen: () -> Unit)
                     fontWeight = FontWeight.Medium,
                 ),
         )
+        Spacer(Modifier.weight(1f))
+        StatusesButton(onStatusesOpen)
     }
 }
 
 @Composable
-private fun HeaderExpanded(modifier: Modifier = Modifier) {
-    Row(modifier = modifier.height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun HeaderExpanded(modifier: Modifier = Modifier, onStatusesOpen: () -> Unit) {
+    Row(
+        modifier = modifier.fillMaxWidth().height(64.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Medium),
         )
+        Spacer(Modifier.weight(1f))
+        StatusesButton(onStatusesOpen)
     }
     Spacer(Modifier.height(4.dp))
 }

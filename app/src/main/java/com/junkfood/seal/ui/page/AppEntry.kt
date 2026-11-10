@@ -66,6 +66,7 @@ import com.junkfood.seal.ui.page.settings.network.CookiesViewModel
 import com.junkfood.seal.ui.page.settings.network.NetworkPreferences
 import com.junkfood.seal.ui.page.settings.network.WebViewPage
 import com.junkfood.seal.ui.page.settings.troubleshooting.TroubleShootingPage
+import com.junkfood.seal.ui.page.status.StatusesPage
 import com.junkfood.seal.ui.page.videolist.VideoListPage
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -151,9 +152,13 @@ fun AppEntry(dialogViewModel: DownloadDialogViewModel) {
                             view.slightHapticFeedback()
                             scope.launch { drawerState.open() }
                         },
+                        onStatusesOpen = {
+                            navController.navigate(Route.STATUSES) { launchSingleTop = true }
+                        },
                     )
                 }
                 animatedComposable(Route.DOWNLOADS) { VideoListPage { onNavigateBack() } }
+                animatedComposable(Route.STATUSES) { StatusesPage(onNavigateBack) }
                 animatedComposableVariant(Route.TASK_LIST) {
                     TaskListPage(
                         onNavigateBack = onNavigateBack,

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Cookie
+import androidx.compose.material.icons.rounded.DonutLarge
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.SettingsApplications
@@ -193,6 +194,16 @@ fun NavigationDrawerSheetContent(
                         .invokeOnCompletion { onNavigateToRoute(Route.DOWNLOADS) }
                 },
                 selected = currentRoute == Route.DOWNLOADS,
+            )
+            NavigationDrawerItem(
+                label = { Text(stringResource(R.string.whatsapp_statuses)) },
+                icon = { Icon(Icons.Rounded.DonutLarge, null) },
+                onClick = {
+                    scope
+                        .launch { onDismissRequest() }
+                        .invokeOnCompletion { onNavigateToRoute(Route.STATUSES) }
+                },
+                selected = currentRoute == Route.STATUSES,
             )
             NavigationDrawerItem(
                 label = { Text(stringResource(R.string.custom_command)) },

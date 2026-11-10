@@ -14,6 +14,8 @@
 2. Tap **Share → StatusDrop**. The video downloads on your phone.
 3. Tap **Share to WhatsApp** (in the app or in the notification) → pick **My status**.
 
+**WhatsApp statuses:** tap **Statuses** in the app to save, repost or send the statuses you have watched (allow the folder once).
+
 Everything runs on your phone. No server, no account, no ads.
 
 > Status videos longer than 90 seconds are trimmed by WhatsApp itself.
